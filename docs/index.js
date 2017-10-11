@@ -16,7 +16,6 @@
       detector.addEventListener("onInitializeSuccess", function() {
         log('#logs', "The detector reports initialized");
         //Display canvas instead of video feed because we want to draw the feature points on it
-        $("#affdex_elements").css("display", "none");
         $("#face_video").css("display", "none");
       });
 
@@ -28,6 +27,8 @@
       function onStart() {
         if (detector && !detector.isRunning) {
           $("#logs").html("");
+          $("#affdex_elements").css('visibility', 'hidden');
+          $("#affdex_elements").css("display", "none");
           detector.start();
         }
         log('#logs', "Clicked the start button");
@@ -112,10 +113,10 @@
               }
           log('#results', "Emotions: " + emotion);
           log('#results', "Emoji: " + faces[0].emojis.dominantEmoji);
-          drawFeaturePoints(image, faces[0].featurePoints);
+          // drawFeaturePoints(image, faces[0].featurePoints);
           if(emotion) {
           	detector.stop();
-            // alert(emotion);
+            alert(emotion);
             let bgcolor = 'white';
             let playlist = 'happy';
             switch(emotion) {
@@ -140,6 +141,7 @@
                 playlist = 'happy';
                 break;
             }
+            console.log(bgcolor);
             $('body').css('backgroundColor', bgcolor);
             // if disgust play hiphop
             // if sad play ballad
