@@ -85,18 +85,18 @@
           let valence = faces[0].emotions['valence'];
           delete faces[0].emotions['engagement'];
           delete faces[0].emotions['valence'];
-          let emotion = Object.keys(faces[0].emotions).reduce((a, b) => {						
+          let emotion = Object.keys(faces[0].emotions).reduce((a, b) => {
           	return faces[0].emotions[a] > faces[0].emotions[b] ? a : b;
           });
-          
+
           if(valence < 10 || engagement < 10 ) {
           	if(faces[0].emotions['surprise'] >= 0 && faces[0].emotions['surprise'] < 10) {
             	emotion = 'neutral';
             }
           } else {
           	if(valence < 0) {
-              // negative emotions 
-              if(faces[0].expressions['innerBrowRaise'] !== 0 || 
+              // negative emotions
+              if(faces[0].expressions['innerBrowRaise'] !== 0 ||
                 faces[0].expressions['lipCornerDepressor'] !== 0) {
                 emotion = 'sadness';
               }
@@ -105,7 +105,7 @@
               }
           	}
           }
-          
+
           // sadness detector
           if(faces[0].expressions['chinRaise'] !== 0 && faces[0].expressions['lipPucker'] !== 0) {
               	emotion = 'sadness';
@@ -115,7 +115,32 @@
           drawFeaturePoints(image, faces[0].featurePoints);
           if(emotion) {
           	detector.stop();
-            alert(emotion);
+            // alert(emotion);
+            let bgcolor = 'white';
+            let playlist = 'happy';
+            switch(emotion) {
+              case 'disgust':
+                bgcolor = 'darkolivegreen';
+                playlist = 'hiphop';
+                break;
+              case 'sadness':
+                bgcolor = 'midnightblue';
+                playlist = 'ballad';
+                break;
+              case 'neutral':
+                bgcolor = 'seashell';
+                playlist = 'cheerup';
+                break;
+              case 'anger':
+                bgcolor = 'slategray';
+                playlist = 'rock';
+                break;
+              case 'joy':
+                bgcolor = 'lemonchiffon';
+                playlist = 'happy';
+                break;
+            }
+            $('body').css('backgroundColor', bgcolor);
             // if disgust play hiphop
             // if sad play ballad
             // if neutral play cheer up
@@ -144,4 +169,3 @@
 
         }
       }
-
