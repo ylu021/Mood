@@ -263,7 +263,7 @@
                   const link = `https://open.spotify.com/embed?uri=spotify:user:${data.owner}:playlist:${data.id}`;
                   // console.log(link);
                   $('.container-fluid').append(`
-                    <div class="row justify-content-center" id="playlist"><iframe src="${link}" width="90%" height="50%" style="" frameborder="0" allowtransparency="true"></iframe></div>
+                    <div class="row justify-content-center" id="playlist"><iframe src="${link}" width="90%" height="480px" frameborder="0" allowtransparency="true"></iframe></div>
                   `);
                   $('#reset').show();
                 }
