@@ -12,6 +12,7 @@
       detector.detectAllExpressions();
       detector.detectAllEmojis();
       $('#reset').hide();
+      $('#face_canvas').hide();
 
       var token = '';
 
@@ -19,42 +20,9 @@
       detector.addEventListener("onInitializeSuccess", function() {
         log('#logs', "The detector reports initialized");
         // Display canvas instead of video feed because we want to draw the feature points on it
-        $("#face_video").css("display", "none");
-        // Obtaining an spotify token
-        // obtainToken();
+        // $("#face_video_canvas").css("display", "block");
+        $("#face_video").css("display", "block");
       });
-
-      // function obtainToken() {
-      //   console.log('obtaining token');
-      //   let xhr = new XMLHttpRequest();
-      //   xhr.open('POST', 'https://accounts.spotify.com/api/token', true);
-      //   xhr.setRequestHeader('Allow', 'OPTIONS, POST');
-      //   xhr.setRequestHeader('Authorization', `Basic ${client_id}:${client_secret}`); // imported crendentials
-      //   xhr.setRequestHeader('Content-type', 'application/json');
-      //   xhr.send('grant_type=client_credentials');
-      //   xhr.onreadystatechange = function() {
-      //     if (xhr.readyState == 4 && xhr.status == 200) {
-      //       localStorage.setItem('access_token', xhr.responseText['access_token']);
-      //     }else {
-      //       console.log('Spotify API Authorization Error');
-      //     }
-      //   }
-      // }
-      //
-      // function renewToken(done) {
-      //   let xhr = new XMLHttpRequest();
-      //   xhr.open('POST', 'https://accounts.spotify.com/api/token', true);
-      //   xhr.setRequestHeader('Authorization', `Basic ${client_id}:${client_secret}`); // imported crendentials
-      //   xhr.setRequestHeader('Content-type', 'application/json');
-      //   xhr.send('grant_type=client_credentials');
-      //   xhr.onreadystatechange = function() {
-      //     if (xhr.readyState == 4 && xhr.status == 200) {
-      //       done(null, xhr.responseText['access_token']);
-      //     }else {
-      //       done('Token cannot be renewed', null);
-      //     }
-      //   }
-      // }
 
       function getDevice(done) {
         let xhr = new XMLHttpRequest();
@@ -72,26 +40,13 @@
       }
 
       function searchPlaylist(keyword, done) {
-        // console.log('searching playlist');
         let xhr = new XMLHttpRequest();
         xhr.open('POST', `/search`, true);
         xhr.setRequestHeader('Content-type', 'application/json');
         xhr.onreadystatechange = function() {
           if (xhr.readyState == 4 && xhr.status == 200) {
-            // got my search
-            // console.log('got my search', xhr.responseText, typeof(xhr.responseText));
             const res = JSON.parse(xhr.responseText)
             done(null, JSON.parse(xhr.responseText));
-            // const items = xhr.responseText['playlists']['items'];
-            // if(items && items.length > 0) {
-            //   // have result
-            //   let idx = Math.floor(Math.random() * (items.length-1));
-            //   let playlist = xhr.responseText['playlists']['items'][idx];
-            //   const playlistId = playlist['id'];
-            //   done(null, playlistId);
-            // } else {
-            //   // no playlist result search for type=track
-            // }
           }
         }
         xhr.send({ q: keyword });
@@ -113,80 +68,24 @@
       }
 
       function log(node_name, msg) {
-        //$(node_name).append("<span>" + msg + "</span><br />")
+        $(node_name).append("<span>" + msg + "</span><br />")
       }
 
-      //function executes when Start button is pushed.
-      function onStart() {
-        if (detector && !detector.isRunning) {
-          $("#logs").html("");
-          $("#affdex_elements").css('visibility', 'hidden');
-          $("#affdex_elements").css("display", "none");
-          detector.start();
-        }
-        log('#logs', "Clicked the start button");
-        displayLoading();
-      }
-
-      //function executes when the Stop button is pushed.
-      function onStop() {
-        log('#logs', "Clicked the stop button");
-        if (detector && detector.isRunning) {
-          detector.removeEventListener();
-          detector.stop();
-        }
-      };
-
-      function displayLoading() {
-        $('#start').hide();
-        $('#reset').hide();
-        $('#emojis').html("<span>Reading your emotion <img src='https://loading.io/spinners/ellipsis/index.discuss-ellipsis-preloader.svg' /></span>");
-      }
-
-      //function executes when the Reset button is pushed.
-      function onReset() {
-        console.log('reset ', detector);
-        log('#logs', "Clicked the reset button");
-        if (detector) {
-          detector.start();
-          displayLoading();
-          $('body').css('color', 'black');
-          $('body').css('backgroundColor', 'white');
-          $('.container-fluid').children().last().remove();
-          $('#results').html("");
-          $('#start').hide();
-        }
-      };
-
-      //Add a callback to notify when camera access is allowed
-      detector.addEventListener("onWebcamConnectSuccess", function() {
-        log('#logs', "Webcam access allowed");
-      });
-
-      //Add a callback to notify when camera access is denied
-      detector.addEventListener("onWebcamConnectFailure", function() {
-        log('#logs', "webcam denied");
-        console.log("Webcam access denied");
-      });
-
-      //Add a callback to notify when detector is stopped
-      detector.addEventListener("onStopSuccess", function() {
-        log('#logs', "The detector reports stopped");
-        $("#results").html("");
-      });
-
-      //Add a callback to receive the results from processing an image.
-      //The faces object contains the list of the faces detected in an image.
-      //Faces object contains probabilities for all the different expressions, emotions and appearance metrics
-      detector.addEventListener("onImageResultsSuccess", function(faces, image, timestamp) {
-        // $('#results').html("");
-        // log('#results', "Timestamp: " + timestamp.toFixed(2));
-        // log('#results', "Number of faces found: " + faces.length);
-        if (faces.length > 0) {
+      const onImageResultsSuccess = function(faces, image, timestamp) {
+        if (detector.isRunning && faces.length > 0) {
           // log('#results', "Appearance: " + JSON.stringify(faces[0].appearance));
-   				 log('#results', "Emotions: " + JSON.stringify(faces[0].emotions, function(key, val) {
-           	return val.toFixed ? Number(val.toFixed(0)) : val;
-           }));
+          // faces[0].emotions = Object.keys(faces[0].emotions).map((key) => {
+          //     let val = faces[0].emotions[key];
+          //     faces[0].emotions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+          // });
+          for (let key in faces[0].emotions) {
+            let val = faces[0].emotions[key];
+            faces[0].emotions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+          }
+          for (let key in faces[0].expressions) {
+            let val = faces[0].expressions[key];
+            faces[0].expressions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+          }
           let engagement = faces[0].emotions['engagement'];
           let valence = faces[0].emotions['valence'];
           let attention = faces[0].expressions['attention'];
@@ -197,31 +96,32 @@
           });
 
           if(valence == 0 || engagement == 0 ) {
-            // if(emotion!=='joy' && faces[0].expressions['chinRaise'] !== 0 && faces[0].expressions['lipPucker'] !== 0) {
-            //   emotion = 'sadness';
-            // }
-          	if(emotion!=='joy' && faces[0].emotions['surprise'] >= 0 && faces[0].emotions['surprise'] < 10) {
+
+          	if(faces[0].expressions['cheekRaise'] == 0) {
             	emotion = 'neutral';
             }
           } else {
+            if(faces[0].emotions['surprise'] > 0 && faces[0].expressions['mouthOpen'] > 0 &&
+              faces[0].expressions['eyeWiden'] > 0) {
+              emotion = 'surprise';
+            }
           	if(valence < 0) {
               // negative emotions
               if(faces[0].expressions['innerBrowRaise'] !== 0 ||
                 faces[0].expressions['lipCornerDepressor'] !== 0) {
                 emotion = 'sadness';
               }
-              else if(faces[0].expressions['lipPress'] !== 0 || faces[0].expressions['lipStretch'] !== 0 || faces[0].expressions['lipSuck'] !== 0) {
-                emotion = 'sadness';
+              else if(faces[0].expressions['noseWrinkle']!==0 ||
+                faces[0].expressions['chinRaise']!==0) {
+                emotion = 'anger';
               }
           	}
           }
-          console.log(emotion);
-
-          log('#results', "Emotions: " + emotion);
-          log('#results', "Emoji: " + faces[0].emojis.dominantEmoji);
+          log('#results', "Emotion: " + emotion);
+          // log('#results', "Emoji: " + faces[0].emojis.dominantEmoji);
           // drawFeaturePoints(image, faces[0].featurePoints);
           if(emotion) {
-          	detector.stop();
+          	onStop();
             // alert(emotion);
             let bgcolor = 'white';
             let themecolor = 'black';
@@ -246,29 +146,25 @@
                 playlist = 'rock';
                 break;
               case 'joy':
+              case 'surprise':
                 bgcolor = 'lemonchiffon';
                 playlist = 'happy';
                 break;
             }
 
-            // console.log(bgcolor, playlist);
             $('body').css('backgroundColor', bgcolor);
             $('body').css('color', themecolor);
-            console.log(faces[0].emojis.dominantEmoji);
             $('#emojis').html(faces[0].emojis.dominantEmoji);
-            if($('.container-fluid').children().last().attr('id') !== 'playlist'){
-              searchPlaylist(playlist, function(err, data) {
-                if(!err && data) {
-                  // console.log('playlist found, data', data, typeof(data));
-                  const link = `https://open.spotify.com/embed?uri=spotify:user:${data.owner}:playlist:${data.id}`;
-                  // console.log(link);
-                  $('.container-fluid').append(`
-                    <div class="row justify-content-center" id="playlist"><iframe src="${link}" width="90%" height="480px" frameborder="0" allowtransparency="true"></iframe></div>
-                  `);
-                  $('#reset').show();
-                }
-              });
-            }
+            // if($('.container-fluid').children().last().attr('id') !== 'playlist'){
+            searchPlaylist(playlist, function(err, data) {
+              if(!err && data) {
+                const link = `https://open.spotify.com/embed?uri=spotify:user:${data.owner}:playlist:${data.id}`;
+                $('.container-fluid').append(`
+                  <div class="row justify-content-center" id="playlist"><iframe src="${link}" width="90%" height="480px" frameborder="0" allowtransparency="true"></iframe></div>
+                `);
+                $('#reset').show();
+              }
+            });
             // if disgust play hiphop
             // if sad play ballad
             // if neutral play cheer up
@@ -276,12 +172,177 @@
             // if happy play happy
           }
         }
+      }
+
+      //function executes when Start button is pushed.
+      function onStart() {
+        if (detector && !detector.isRunning) {
+          $("#logs").html("");
+          $('#face_canvas').show();
+          detector.addEventListener('onImageResultsSuccess', onImageResultsSuccess);
+          detector.start();
+        }
+        log('#logs', "Clicked the start button");
+        displayLoading();
+      }
+
+      //function executes when the Stop button is pushed.
+      function onStop() {
+        console.log('#logs', "Clicked the stop button", detector.isRunning);
+        if (detector && detector.isRunning) {
+          detector.removeEventListener('onImageResultsSuccess');
+          detector.stop();
+          $('#face_canvas').hide();
+          console.log('#logs', "remove event listener", detector);
+        }
+      };
+
+      function displayLoading() {
+        $('#start').hide();
+        $('#reset').hide();
+        $('#emojis').html("<span>Reading your emotion <img src='https://loading.io/spinners/ellipsis/index.discuss-ellipsis-preloader.svg' /></span>");
+      }
+
+      //function executes when the Reset button is pushed.
+      function onReset() {
+        log('#logs', "Clicked the reset button");
+        if (detector) {
+          $('body').css('color', 'black');
+          $('body').css('backgroundColor', 'white');
+          $('.container-fluid').children().last().remove();
+          $('#results').html("");
+          $('#start').hide();
+          onStart();
+        }
+      };
+
+      //Add a callback to notify when camera access is allowed
+      detector.addEventListener("onWebcamConnectSuccess", function() {
+        log('#logs', "Webcam access allowed");
       });
+
+      //Add a callback to notify when camera access is denied
+      detector.addEventListener("onWebcamConnectFailure", function() {
+        log('#logs', "webcam denied");
+      });
+
+      //Add a callback to notify when detector is stopped
+      detector.addEventListener("onStopSuccess", function() {
+        log('#logs', "The detector reports stopped");
+      });
+      //Add a callback to receive the results from processing an image.
+      //The faces object contains the list of the faces detected in an image.
+      //Faces object contains probabilities for all the different expressions, emotions and appearance metrics
+      // detector.addEventListener("onImageResultsSuccess", function(faces, image, timestamp) {
+      //   console.log('imageresultsuccess')
+      //   // $('#results').html("");
+      //   // log('#results', "Timestamp: " + timestamp.toFixed(2));
+      //   // log('#results', "Number of faces found: " + faces.length);
+      //   if (detector.isRunning && faces.length > 0) {
+      //     // log('#results', "Appearance: " + JSON.stringify(faces[0].appearance));
+      //     // faces[0].emotions = Object.keys(faces[0].emotions).map((key) => {
+      //     //     let val = faces[0].emotions[key];
+      //     //     faces[0].emotions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+      //     // });
+      //     for (let key in faces[0].emotions) {
+      //       let val = faces[0].emotions[key];
+      //       faces[0].emotions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+      //     }
+      //     for (let key in faces[0].expressions) {
+      //       let val = faces[0].expressions[key];
+      //       faces[0].expressions[key] = val.toFixed ? Number(val.toFixed(0)) : val;
+      //     }
+      //     let engagement = faces[0].emotions['engagement'];
+      //     let valence = faces[0].emotions['valence'];
+      //     let attention = faces[0].expressions['attention'];
+      //     delete faces[0].emotions['engagement'];
+      //     delete faces[0].emotions['valence'];
+      //     let emotion = Object.keys(faces[0].emotions).reduce((a, b) => {
+      //     	return faces[0].emotions[a] > faces[0].emotions[b] ? a : b;
+      //     });
+      //
+      //     if(valence == 0 || engagement == 0 ) {
+      //
+      //     	if(faces[0].expressions['cheekRaise'] == 0) {
+      //       	emotion = 'neutral';
+      //       }
+      //     } else {
+      //       if(faces[0].emotions['surprise'] > 0 && faces[0].expressions['mouthOpen'] > 0 &&
+      //         faces[0].expressions['eyeWiden'] > 0) {
+      //         emotion = 'surprise';
+      //       }
+      //     	if(valence < 0) {
+      //         // negative emotions
+      //         if(faces[0].expressions['innerBrowRaise'] !== 0 ||
+      //           faces[0].expressions['lipCornerDepressor'] !== 0) {
+      //           emotion = 'sadness';
+      //         }
+      //         else if(faces[0].expressions['noseWrinkle']!==0 ||
+      //           faces[0].expressions['chinRaise']!==0) {
+      //           emotion = 'anger';
+      //         }
+      //     	}
+      //     }
+      //     log('#results', "Emotion: " + emotion);
+      //     // log('#results', "Emoji: " + faces[0].emojis.dominantEmoji);
+      //     // drawFeaturePoints(image, faces[0].featurePoints);
+      //     if(emotion) {
+      //     	onStop();
+      //       // alert(emotion);
+      //       let bgcolor = 'white';
+      //       let themecolor = 'black';
+      //       let playlist = 'happy';
+      //       switch(emotion) {
+      //         case 'disgust':
+      //           bgcolor = 'darkolivegreen';
+      //           playlist = 'hiphop';
+      //           themecolor = 'white';
+      //           break;
+      //         case 'sadness':
+      //           bgcolor = 'midnightblue';
+      //           playlist = 'ballad';
+      //           themecolor = 'white';
+      //           break;
+      //         case 'neutral':
+      //           bgcolor = 'seashell';
+      //           playlist = 'cheerup';
+      //           break;
+      //         case 'anger':
+      //           bgcolor = 'slategray';
+      //           playlist = 'rock';
+      //           break;
+      //         case 'joy':
+      //         case 'surprise':
+      //           bgcolor = 'lemonchiffon';
+      //           playlist = 'happy';
+      //           break;
+      //       }
+      //
+      //       $('body').css('backgroundColor', bgcolor);
+      //       $('body').css('color', themecolor);
+      //       $('#emojis').html(faces[0].emojis.dominantEmoji);
+      //       // if($('.container-fluid').children().last().attr('id') !== 'playlist'){
+      //       searchPlaylist(playlist, function(err, data) {
+      //         if(!err && data) {
+      //           const link = `https://open.spotify.com/embed?uri=spotify:user:${data.owner}:playlist:${data.id}`;
+      //           $('.container-fluid').append(`
+      //             <div class="row justify-content-center" id="playlist"><iframe src="${link}" width="90%" height="480px" frameborder="0" allowtransparency="true"></iframe></div>
+      //           `);
+      //           $('#reset').show();
+      //         }
+      //       });
+      //       // if disgust play hiphop
+      //       // if sad play ballad
+      //       // if neutral play cheer up
+      //       // if anger play rock
+      //       // if happy play happy
+      //     }
+      //   }
+      // });
 
       //Draw the detected facial feature points on the image
       function drawFeaturePoints(img, featurePoints) {
         var contxt = $('#face_video_canvas')[0].getContext('2d');
-
         var hRatio = contxt.canvas.width / img.width;
         var vRatio = contxt.canvas.height / img.height;
         var ratio = Math.min(hRatio, vRatio);
